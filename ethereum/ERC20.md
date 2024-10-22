@@ -3,7 +3,6 @@ OpenZeppelinのERC20を利用したトークン間での送金を行うコント
 
 ## hardhatプロジェクトの作成
 - ERC20プロジェクトディレクトリ
-
 ```
 cd ~/hardhat
 mkdir erc20
@@ -53,7 +52,7 @@ contract MyERC20 is ERC20 {
 　　
     // コンストラクタ：コントラクトのデプロイ時に実行される
     // initialSupply: 初期供給量を指定
-    constructor(uint initialSupply) ERC20("MyToken", "MTK") {
+    constructor(uint256 initialSupply) ERC20("MyToken", "MTK") {
       // _mint関数を呼び出して、指定された量のトークンを作成し、
       // それらをコントラクトをデプロイしたアドレス（msg.sender）に割り当てる
 　　　　owner = msg.sender
@@ -88,4 +87,50 @@ module.exports = {
   },
 };
 ```
+## ローカルノードの起動
+新しく端末を開いて実行
+```
+npx hardhat node
+```
+
 ## デプロイスクリプトの作成
+### Ethers.jsのインストール
+デプロイスクリプト作成にあたって、ethers.js ライブラリをインストールする
+```
+npm install --save-dev ethers
+```
+
+scripts ディレクトリを作成して deploy スクリプトを作成する
+
+```javascript
+mkdir scripts
+nano scripts/deploy.js
+```
+
+```javascript
+const hre = require("hardhat");
+
+async function main() {
+  const [deployer] = await ethers.getSigners();
+
+  console.log("Deploying contracts with the account:", deployer.address);
+
+  const MyERC20 = await hre.ethers.getContractFactory("MyERC20");
+  const myERC20 = await MyERC20.deploy(hre.ethers.utils.parseEther("1000000"));
+  await myERC20.deployed();
+
+  console.log("MyERC20 deployed to:", myERC20.address);
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+```
+
+###ローカルノードへのデプロイ
+```
+npx hardhat run scripts/deploy.js --network localhost
+```
