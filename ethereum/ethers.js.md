@@ -1,5 +1,7 @@
 # ethers.js
 
+https://docs.ethers.org/v6/migrating/
+
 ## ethers.js v5からv6への主な変更点
 - アドレス取得:
 ```javascript
