@@ -1,8 +1,33 @@
 # ethers.js
 
-https://docs.ethers.org/v6/migrating/
+## テストプログラムについて
+### テストの構造:
+```javascript
+describe("カテゴリ名", function() {
+  it("テストケース名", async function() {
+    // テストの内容
+  });
+});
+```
+
+- `describe`: テストをグループ化
+- `it`: 個別のテストケース
+- 入れ子にすることで階層的な構造を作れる
+
+### beforeEach:
+```javascript
+beforeEach(async function() {
+// セットアップコード
+});
+```
+
+- 各テストケースの前に実行される
+- テスト環境を初期化する
+- 共通の準備処理を書く
 
 ## ethers.js v5からv6への主な変更点
+[Migrating from v5](https://docs.ethers.org/v6/migrating/)
+
 - アドレス取得:
 ```javascript
 // v5
