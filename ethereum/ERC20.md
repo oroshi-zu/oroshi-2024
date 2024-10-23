@@ -137,3 +137,6 @@ npx hardhat run scripts/deploy.js --network localhost
 ```
 
 ## テストプログラム
+```
+nano test/Token20.js
+```
