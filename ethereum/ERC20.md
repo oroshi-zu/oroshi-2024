@@ -38,25 +38,15 @@ npm install --save-dev @openzeppelin/contracts
 ```
 nano contracts/MyERC20.sol
 ```
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// OpenZeppelinのERC20コントラクトをインポート
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-// MyERC20コントラクトで、OpenZeppelinのERC20コントラクトを継承
 contract MyERC20 is ERC20 {
-　　// コントラクトのオーナー
-    address public owner;
-　　
-    // コンストラクタ：コントラクトのデプロイ時に実行される
-    // initialSupply: 初期供給量を指定
-    constructor(uint256 initialSupply) ERC20("MyToken", "MTK") {
-      // _mint関数を呼び出して、指定された量のトークンを作成し、
-      // それらをコントラクトをデプロイしたアドレス（msg.sender）に割り当てる
-　　　　owner = msg.sender
-        _mint(owner, initialSupply);
+    constructor(uint256 initialSupply) ERC20("MyERC20", "ME20") {
+        _mint(msg.sender, initialSupply);
     }
 }
 ```
@@ -111,15 +101,20 @@ nano scripts/deploy.js
 const hre = require("hardhat");
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("デプロイ主体のアカウント:", deployer.address);
 
-  console.log("Deploying contracts with the account:", deployer.address);
+  // 初期供給量を ethers.parseUnits を使用して設定
+  const initialSupply = hre.ethers.parseUnits("1000", 18);
 
-  const MyERC20 = await hre.ethers.getContractFactory("MyERC20");
-  const myERC20 = await MyERC20.deploy(hre.ethers.utils.parseEther("1000"));
-  await myERC20.deployed();
+  // トークンをデプロイ
+  const MyERC20 = await hre.ethers.deployContract("MyERC20",[initialSupply]);
+  await MyERC20.waitForDeployment();
 
-  console.log("MyERC20 deployed to:", myERC20.address);
+  // デプロイされたコントラクトのアドレスを取得
+  const contractAddress = await MyERC20.getAddress();
+  console.log("オーナー:", contractAddress);
+
 }
 
 main()
@@ -130,11 +125,15 @@ main()
   });
 ```
 
-### 解説みたいなもの
-- `ethers.getSigners()`: この関数は、Hardhat Networkで利用可能なアカウント（シグナー）のリストを返します。デフォルトでは、Hardhatは10個のテストアカウントを提供します。[deployer] で最初のアカウントを取得しています。
-- `ethers.getContractFactory(name)`: コントラクトのファクトリを取得します。これを使用してコントラクトをデプロイできます。
-
 ### ローカルノードへのデプロイ
 ```
 npx hardhat run scripts/deploy.js --network localhost
 ```
+
+上手くいくと、以下のように表示される
+```
+デプロイ主体のアカウント: 0x.. // 0xから始まるアドレス
+オーナー: 0x..
+```
+
+## テストプログラム
