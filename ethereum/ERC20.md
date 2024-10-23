@@ -1,6 +1,9 @@
 # ERC20
 OpenZeppelinのERC20を利用したトークン間での送金を行うコントラクト
 
+## ERC20の仕様
+[ERC-20: Token Standard](https://eips.ethereum.org/EIPS/eip-20)
+
 ## hardhatプロジェクトの作成
 - ERC20プロジェクトディレクトリ
 ```
