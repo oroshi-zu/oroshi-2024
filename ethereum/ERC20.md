@@ -284,9 +284,6 @@ npx hardhat test
 
 =>
 
-oroshi@LAPTOP-9RCG2VAF:~/hardhat-projects/erc20$ npx hardhat test
-
-
   ERC20トークンのコントラクト
     トークンの基本情報
 
