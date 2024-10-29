@@ -74,3 +74,18 @@ new ethers.Contract(address, abi, signer)
 // v6
 ethers.getContractAt("ContractName", address)
 ```
+
+- BigInt
+```javascript
+// ethers.js v5
+amount1.add(amount2)      // 加算
+amount1.sub(amount2)      // 減算
+amount1.mul(amount2)      // 乗算
+amount1.div(amount2)      // 除算
+
+// ethers.js v6
+amount1 + amount2         // 加算
+amount1 - amount2         // 減算
+amount1 * amount2         // 乗算
+amount1 / amount2         // 除算
+```
