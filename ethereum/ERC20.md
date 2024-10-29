@@ -330,6 +330,14 @@ hardhat node が別ターミナルで実行されているか確認
 
 ![MetaMask3](https://github.com/user-attachments/assets/401db7ec-6c6f-4bb7-83e5-aa150a836e3e)
 
+
+- 同じ手順で移動先のアカウントにもトークンをインポートする
+
+
+![MetaMask8](https://github.com/user-attachments/assets/8c14c956-9b3c-4188-9fc8-11a56bf5b1fa)
+
+
+
 ### 他のアカウントへのトークンの送金
 - 送金ボタンを押したのち、移動元と移動先を選択
 - 今回は100トークン送金
@@ -345,7 +353,10 @@ hardhat node が別ターミナルで実行されているか確認
 ![MetaMask5](https://github.com/user-attachments/assets/7079d2a3-6f4d-4a06-9514-da66584d2af4)
 
 
-- トークンの残高が減っていることを確認
+- お互いのアカウントでトークンの残高の増減を確認
 
 
 ![MetaMsk6](https://github.com/user-attachments/assets/795a89e8-bbd2-4132-9c7f-af084415dcdd)
+
+
+![MetaMask7](https://github.com/user-attachments/assets/c735f443-36ac-4a67-af9c-ec10c27c16eb)
