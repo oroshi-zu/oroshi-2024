@@ -143,3 +143,169 @@ npx hardhat run scripts/deploy.js --network localhost
 ```
 nano test/Token20.js
 ```
+
+```javascript
+// hardhat tool box の利用
+const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
+
+const { ethers } = require("hardhat");
+
+// Chaiの利用
+const { expect } = require("chai");
+
+describe("ERC20トークンのコントラクト", function () {
+  // フィクスチャの定義
+  async function deployTokenFixture() {
+    // コントラクトをデプロイするアカウントとテスト用アカウントを取得
+    [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+
+    // コントラクトのデプロイ
+    const MyERC20 = await ethers.getContractFactory("MyERC20");
+    // 1000トークンを初期供給量として設定
+    const initialSupply = ethers.parseUnits("1000", 18);
+    const myToken = await MyERC20.deploy(initialSupply);
+    await myToken.waitForDeployment();
+
+    // 必要な値をまとめて返す
+    return { myToken, owner, addr1, addr2, addrs, initialSupply };
+  }
+
+  describe("トークンの基本情報", function() {
+    it("トークンの基本情報を表示", async function() {
+      const { myToken, owner } = await loadFixture(deployTokenFixture);
+
+      const name = await myToken.name();
+      const symbol = await myToken.symbol();
+      const decimals = await myToken.decimals();
+      const totalSupply = await myToken.totalSupply();
+      const address = await myToken.getAddress();
+
+      console.log("\n=== トークン基本情報 ===");
+      console.log(`トークン名: ${name}`);
+      console.log(`シンボル: ${symbol}`);
+      console.log(`小数点桁数: ${decimals}`);
+      console.log(`総供給量: ${ethers.formatUnits(totalSupply, decimals)} ${symbol}`);
+      console.log(`コントラクトアドレス: ${address}`);
+      console.log("=====================\n");
+    });
+  });
+
+  // トークン残高のテスト
+  describe("トークン残高のテスト", function() {
+    it("トークンの総量が所有者に割り当てられていること", async function() {
+      const { myToken, owner, initialSupply } = await loadFixture(
+        deployTokenFixture
+      );
+
+      // オーナーの所持金額
+      const ownerBalance = await myToken.balanceOf(owner.address);
+      // トークンの総額がオーナーの所持金に等しい
+      expect(await myToken.totalSupply()).to.equal(ownerBalance);
+    });
+  });
+
+  // トークン転送のテスト
+  describe("トークン転送のテスト", function() {
+    it("アカウント間でトークンが転送されること", async function() {
+
+      const { myToken, owner, addr1, addr2 } = await loadFixture(
+        deployTokenFixture
+      );
+
+      const transferAmount = ethers.parseUnits("50", 18);
+
+      // オーナーからaddr1に50トークン送金
+      await expect(
+        myToken.transfer(addr1.address, transferAmount)
+      ).to.changeTokenBalances(
+        myToken,
+        [owner, addr1],
+        [ethers.parseUnits("-50", 18), ethers.parseUnits("50", 18)]
+      );
+
+      // addr1からaddr2に50トークン送金
+      await expect(
+        myToken.connect(addr1).transfer(addr2.address, transferAmount)
+      ).to.changeTokenBalances(
+        myToken,
+        [addr1, addr2],
+        [ethers.parseUnits("-50", 18), ethers.parseUnits("50", 18)]
+      );
+    });
+  });
+
+  // 承認と委任転送のテスト
+  describe("承認と委任転送のテスト", function() {
+    it("承認額が正しく更新されること", async function() {
+      const { myToken, owner, addr1 } = await loadFixture(
+        deployTokenFixture
+      );
+
+      // 承認を実行し、トランザクションの完了を待つ
+      const approveAmount = ethers.parseUnits("100", 18);
+      const approveTx = await myToken.approve(addr1.address, approveAmount);
+      await approveTx.wait();
+
+      expect(await myToken.allowance(owner.address, addr1.address))
+        .to.equal(approveAmount);
+    });
+
+    it("承認を受けたアドレスが委任転送が正しく実行できること", async function() {
+      const {myToken, owner, addr1, addr2 } = await loadFixture(
+        deployTokenFixture
+      );
+
+      // 100トークン承認する
+      const approveAmount = ethers.parseUnits("100", 18);
+      // 50トークン委任転送する
+      const transferAmount = ethers.parseUnits("50", 18);
+
+      // 承認を実行
+      const approveTx = await myToken.approve(addr1.address, approveAmount);
+      await approveTx.wait();
+
+      // 転送を実行
+      const transferTx = await myToken.connect(addr1)
+        .transferFrom(owner.address, addr2.address, transferAmount);
+      await transferTx.wait();
+
+      expect(await myToken.balanceOf(addr2.address)).to.equal(transferAmount);
+      expect(await myToken.allowance(owner.address, addr1.address))
+        .to.equal(approveAmount - transferAmount);
+    });
+  });
+});
+```
+
+テストの実行
+```
+npx hardhat test
+
+=>
+
+oroshi@LAPTOP-9RCG2VAF:~/hardhat-projects/erc20$ npx hardhat test
+
+
+  ERC20トークンのコントラクト
+    トークンの基本情報
+
+=== トークン基本情報 ===
+トークン名: MyERC20
+シンボル: ME20
+小数点桁数: 18
+総供給量: 1000.0 ME20
+コントラクトアドレス: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+=====================
+
+      ✔ トークンの基本情報を表示 (11570ms)
+    トークン残高のテスト
+      ✔ トークンの総量が所有者に割り当てられていること
+    トークン転送のテスト
+      ✔ アカウント間でトークンが転送されること (20523ms)
+    承認と委任転送のテスト
+      ✔ 承認額が正しく更新されること (10772ms)
+      ✔ 承認を受けたアドレスが委任転送が正しく実行できること (20389ms)
+
+
+  5 passing (1m)
+```
