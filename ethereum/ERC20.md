@@ -136,8 +136,9 @@ npx hardhat run scripts/deploy.js --network localhost
 上手くいくと、以下のように表示される
 ```
 デプロイ主体のアカウント: 0x.. // 0xから始まるアドレス
-オーナー: 0x..
+オーナー: 0x.. // ←コントラクトアドレス
 ```
+コントラクトアドレスをメモしておく
 
 ## テストプログラム
 ```
@@ -309,3 +310,42 @@ oroshi@LAPTOP-9RCG2VAF:~/hardhat-projects/erc20$ npx hardhat test
 
   5 passing (1m)
 ```
+
+## MetaMaskでの送金
+hardhat node が別ターミナルで実行されているか確認
+
+### トークンの追加
+- メタマスクで「トークンをインポート」を選択
+![MetaMask1](https://github.com/user-attachments/assets/235e85f8-a5cb-4cec-8ede-16dfe6ddf5c0)
+
+
+- 先ほどのコントラクトアドレスを入力する
+
+
+![MetaMask2](https://github.com/user-attachments/assets/4df8bff2-94fe-4bae-9e4c-6d79eae0a6c7)
+
+
+- トークンがインポートされる
+
+
+![MetaMask3](https://github.com/user-attachments/assets/401db7ec-6c6f-4bb7-83e5-aa150a836e3e)
+
+### 他のアカウントへのトークンの送金
+- 送金ボタンを押したのち、移動元と移動先を選択
+- 今回は100トークン送金
+- **続行**を選択
+
+
+![MetaMask4](https://github.com/user-attachments/assets/4dca46c0-a60e-4e05-b306-0f33ac998a8b)
+
+
+- **確認**を選択
+
+
+![MetaMask5](https://github.com/user-attachments/assets/7079d2a3-6f4d-4a06-9514-da66584d2af4)
+
+
+- トークンの残高が減っていることを確認
+
+
+![MetaMsk6](https://github.com/user-attachments/assets/795a89e8-bbd2-4132-9c7f-af084415dcdd)
