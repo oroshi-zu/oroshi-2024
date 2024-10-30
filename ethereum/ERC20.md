@@ -135,10 +135,96 @@ npx hardhat run scripts/deploy.js --network localhost
 
 上手くいくと、以下のように表示される
 ```
-デプロイ主体のアカウント: 0x.. // 0xから始まるアドレス
-オーナー: 0x.. // ←コントラクトアドレス
+デプロイ主体のアカウント: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+オーナー: 0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
+
+- ログの確認
+```
+Mined block #3
+  Block: 0x02c3554d6ffc0357be96adeee7f166c0f6da4c4e61fb847381def660894d2fbe
+    Base fee: 669921875
+    Transaction:           0x2ee57f341412d97757f09f272e36f4b1d31ceddcc91b62d22305f7146808e41a
+      Contract deployment: MyERC20
+      Contract address:    0x5fbdb2315678afecb367f032d93f642f64180aa3
+      From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+      Value:               0 ETH
+```
+
 コントラクトアドレスをメモしておく
+
+## コンソールからの操作
+
+### コンソールの起動
+```
+npx hardhat console --network localhost 
+```
+
+### ERC20コントラストへの操作
+```
+> const contract_addr = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
+
+> const factory = await ethers.getContractFactory("MyERC20")
+
+// 当該コントラクトアドレスのコントラクトに接続する
+> const contract = await factory.attach(contract_addr)
+
+// EOAのアドレス
+> const [owner, addr1, addr2] = await ethers.getSigners();
+
+// トークンの総供給量
+> await contract.totalSupply()
+1000000000000000000000n
+// owner のトークン保有量
+> await contract.balanceOf(owner)
+1000000000000000000000n
+```
+
+- トークンの送付
+```js
+> await contract.transfer(addr1,80)
+ContractTransactionResponse {
+  provider: HardhatEthersProvider {
+    _hardhatProvider: LazyInitializationProviderAdapter {
+      _providerFactory: [AsyncFunction (anonymous)],
+      _emitter: [EventEmitter],
+      _initializingPromise: [Promise],
+      provider: [BackwardsCompatibilityProviderAdapter]
+    },
+    _networkName: 'localhost',
+    _blockListeners: [],
+    _transactionHashListeners: Map(0) {},
+    _eventListeners: []
+  },
+  blockNumber: null,
+  blockHash: null,
+  index: undefined,
+  hash: '0x58f12db917786dad6b7da43b9ac95bd6687a53a0fc95fecf0382ccd00e39aafe',
+  type: 2,
+  to: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+  from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  nonce: 1,
+  gasLimit: 30000000n,
+  gasPrice: 1002745697n,
+  maxPriorityFeePerGas: 1000000000n,
+  maxFeePerGas: 1002745697n,
+  maxFeePerBlobGas: null,
+  data: '0xa9059cbb00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c80000000000000000000000000000000000000000000000000000000000000050',
+  value: 0n,
+  chainId: 31337n,
+  signature: Signature { r: "0x120f7d74e148135834964d109f816956cd382d3f6550b4e8ff7fea8983f01381", s: "0x15b6b8f7ef2aab9ff440ff95fefb7749db4e49fc046af36eaa14346d3fb50059", yParity: 1, networkV: null },
+  accessList: [],
+  blobVersionedHashes: null
+}
+```
+
+- アカウントのトークン保有残高の確認
+```js
+> await contract.balanceOf(owner)
+999999999999999999920n
+> await contract.balanceOf(addr1)
+80n
+```
 
 ## テストプログラム
 ```
