@@ -160,7 +160,7 @@ Mined block #3
 npx hardhat console --network localhost 
 ```
 
-### ERC20コントラストへの操作
+### ERC20コントラクトへの操作
 ```
 > const contract_addr = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
 
