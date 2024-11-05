@@ -447,7 +447,7 @@ nano contracts/Faucet.sol
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
-import "./JPYcoin.sol";
+import "./MyERC20.sol";
 
 // 無料配布（Faucet）システムのコントラクト
 contract Faucets {
@@ -465,7 +465,7 @@ contract Faucets {
     // @param _buyTimeLimit - リクエスト間の待機時間（秒）
     constructor(address tokenAddress, uint256 _buyTimeLimit) {
         cwmToken = CWMToken(tokenAddress);  // トークンコントラクトのインスタンス化
-        buyTimeLimit = _buyTimeLimit;        // 待機時間の設定
+        buyTimeLimit = _buyTimeLimit;       // 待機時間の設定
     }
 
     // トークンの無料配布をリクエストする関数
@@ -495,21 +495,19 @@ contract Faucets {
     }
 }
 
+
+// MyERC20 (ERC20)コントラクトを利用するためのインターフェース定義
+interface MyERC20 {
+    // 他のアドレス（_spender）にトークンの使用を許可する
+    function approve(address _spender, uint256 _amount) external returns (bool);
+    // 許可されたアドレスがトークンを転送する
+    function transferFrom(address _sender, address _recipient, uint256 _amount) external returns (bool);
+    // アドレスの残高を確認する
+    function balanceOf(address _account) external view returns (uint256);
+}
+
 // ETHでトークンを購入するためのコントラクト
 contract Faucet {
-    // JPYcoinインターフェースの定義
-    // トークンコントラクトとの相互作用に必要な関数を定義
-    interface JPYcoin {
-        // 指定したアドレスにトークンの使用を承認する
-        function approve(address _spender, uint256 _amount) external returns (bool);
-        
-        // 承認された額のトークンを送信者から受信者に転送する
-        function transferFrom(address _sender, address _recipient, uint256 _amount) external returns (bool);
-        
-        // アドレスの残高を確認する
-        function balanceOf(address _account) external view returns (uint256);
-    }
-
     JPYcoin public token;      // トークンコントラクトへの参照
     address public seller;      // トークンの販売者アドレス
     uint256 public rate;       // 交換レート（1 ETHあたりのトークン数）
