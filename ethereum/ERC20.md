@@ -201,22 +201,33 @@ npx hardhat console --network localhost
 
 - addr1 にトークン送金を承認する
 ```js
- await ME20.approve(addr1,1000)
+> await ME20.approve(addr1,1000)
 ```
 
 - addr1 に承認された owner のトークンの引き出し可能金額
 ```js
-await ME20.allowance(owner, addr1)
+> await ME20.allowance(owner, addr1)
 1000n
+```
+
+- 送金のためにaddr1のアカウントに切り替える
+```js
+> const ME20_addr1 = await ME20.connect(addr1);
 ```
 
 - addr1 が owner の代理で addr2 にトークンを送金する
 ```js
-await ME20.transferFrom(addr1,addr2,100)
+> await ME20_addr1.transferFrom(owner.address, addr2.address, 100)
 ```
 
 - アカウントのトークン保有残高の確認
-
+```js
+> await ME20.balanceOf(owner)
+99991999900n
+> await ME20.balanceOf(addr2)
+100n
+> await ME20.allowance(owner, addr1)
+900n
 
 ## テストプログラム
 ```
