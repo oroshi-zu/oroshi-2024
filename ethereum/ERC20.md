@@ -28,6 +28,7 @@ npx hardhat init
 ```
 rm contracts/Lock.sol
 rm test/Lock.js
+rm ignition/modules/Lock.js
 ```
 
 ## OpenZeppelinコントラクトのインストール
@@ -93,60 +94,45 @@ npx hardhat node
 npm install --save-dev ethers
 ```
 
-scripts ディレクトリを作成して deploy スクリプトを作成する
+- デプロイスクリプトを作成する
 
 ```
-mkdir scripts
-nano scripts/deploy.js
+nano ignition/modules/MyERC20.js
 ```
 
 ```js
-const hre = require("hardhat");
+const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
 
-async function main() {
-  const [deployer] = await hre.ethers.getSigners();
-  console.log("デプロイ主体のアカウント:", deployer.address);
-
-  // 初期供給量を ethers.parseUnits を使用して設定
-  const initialSupply = hre.ethers.parseUnits("10", 10);
-
-  // トークンをデプロイ
-  const MyERC20 = await hre.ethers.deployContract("MyERC20",[initialSupply]);
-  await MyERC20.waitForDeployment();
-
-  // デプロイされたコントラクトのアドレスを取得
-  const contractAddress = await MyERC20.getAddress();
-  console.log("オーナー:", contractAddress);
-
-}
-
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+module.exports = buildModule("MyERC20", (m) => {
+  // コンストラクタの引数として初期のトーク供給量を 10の11乗とする
+  const contract = m.contract("MyERC20", [10**11]);
+  return { contract };
+});
 ```
 
 ### ローカルノードへのデプロイ
 ```
-npx hardhat run scripts/deploy.js --network localhost
-```
+npx hardhat ignition deploy ignition/modules/MyERC20.js --network localhost
 
-上手くいくと、以下のように表示される
-```
-デプロイ主体のアカウント: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-オーナー: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+=>
+Batch #1
+  Executed MyERC20#MyERC20
+
+[ MyERC20 ] successfully deployed 🚀
+
+Deployed Addresses
+
+MyERC20#MyERC20 - 0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
 
 - ログの確認
 ```
-Mined block #159
-  Block: 0xfcae8882d5d61e0f79f66770bf8e285a5f19428e47436ddcd0950a0245a99732
-    Base fee: 7
-    Transaction:           0x41dc85e9eb4acb83a8a1c8ea2aea1d8b908f83aa0bd5a564d9c9734430b47338
+Mined block #2
+  Block: 0xb64be7063822be312b168bf81fd8616f3fc829add96ef9a670ccafef998e9ebb
+    Base fee: 765625000
+    Transaction:           0x133b8bd3e2a3e57fb5393b64cda1fa218106604ccaf74636a1ed35f810e4cfba
       Contract deployment: MyERC20
-      Contract address:    0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0
+      Contract address:    0x5fbdb2315678afecb367f032d93f642f64180aa3
       From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
       Value:               0 ETH
 ```
@@ -162,7 +148,7 @@ npx hardhat console --network localhost
 
 ### ERC20コントラクトへの操作
 ```js
-> const MyERC20 = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+> const MyERC20 = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
 
 > const MyERC20factory = await ethers.getContractFactory("MyERC20")
 
@@ -441,7 +427,7 @@ hardhat node が別ターミナルで実行されているか確認
 
 ### コントラクトのコード
 ```
-nano contracts/Faucet.sol
+nano contracts/ME20Faucet.sol
 ```
 
 ```solidity
@@ -452,7 +438,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./MyERC20.sol";
 
-contract Faucet {
+contract ME20Faucet {
     MyERC20 public token;    // トークンコントラクトへの参照
     address public owner;    // コントラクトの所有者アドレス
     uint256 public rate;     // 交換レート（1ETHあたりのトークン量）
@@ -495,4 +481,17 @@ contract Faucet {
 npx hardhat compile
 ```
 
-- デプロイスクリプトの作成
+## デプロイスクリプトの作成
+```
+nano ignition/modules/ME20Faucet.js
+```
+
+```js
+const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
+
+module.exports = buildModule("ME20Faucet", (m) => {
+  // ETHとトークンの交換比率は 20
+  const ME20Faucet = m.contract("ME20Faucet", [20]);
+  return { ME20Faucet };
+});
+```
