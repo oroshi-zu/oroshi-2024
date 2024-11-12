@@ -443,10 +443,15 @@ contract ME20Faucet {
     address public owner;    // コントラクトの所有者アドレス
     uint256 public rate;     // 交換レート（1ETHあたりのトークン量）
 
-    constructor(MyERC20 _token, uint256 _rate) {
-        token = _token;     // トークンコントラクトの設定
+    // 初期化時にのデプロイ済のERC20コントラクトと ETH とトークンの交換比率を設定する
+    constructor(uint256 _rate) {
         rate = _rate;       // レートの設定
         owner = msg.sender; // コントラクトをデプロイしたアドレスを所有者として設定
+    }
+
+    // トークンコントラクトのインスタンスをセットする
+    function setToken(MyERC20 _token) public {
+        token = _token;
     }
 
     // コントラクトにETHを送信するための関数
@@ -481,7 +486,7 @@ contract ME20Faucet {
 npx hardhat compile
 ```
 
-## デプロイスクリプトの作成
+### デプロイスクリプトの作成
 ```
 nano ignition/modules/ME20Faucet.js
 ```
@@ -495,3 +500,57 @@ module.exports = buildModule("ME20Faucet", (m) => {
   return { ME20Faucet };
 });
 ```
+
+### ローカルノードへのデプロイ
+```
+npx hardhat ignition deploy ignition/modules/ME20Faucet.js --network localhost
+
+=>
+Batch #1
+  Executed ME20Faucet#ME20Faucet
+
+[ ME20Faucet ] successfully deployed 🚀
+
+Deployed Addresses
+
+MyERC20#MyERC20 - 0x5FbDB2315678afecb367f032d93F642f64180aa3
+ME20Faucet#ME20Faucet - 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+```
+
+### コンソールからの操作
+- ERC20コントラクトとトークン購入コントラクトのインスタンスとの接続
+```
+npx hardhat console
+```
+
+```js
+> const MyERC20 = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
+> const MyERC20factory = await ethers.getContractFactory("MyERC20")
+> const ME20 = await MyERC20factory.attach(MyERC20)
+
+> const ME20Faucet = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+> const ME20FaucetFactory = await ethers.getContractFactory("ME20Faucet")
+> const ME20F = await ME20FaucetFactory.attach(ME20Faucet)
+```
+
+- ERC20コントラクトからトークン購入コントラクトに対して代理送金を許可する（1000000000トークンまで）
+```js
+> await ME20.approve(ME20Faucet,1000000000);
+```
+
+- テスト用アドレス
+```js
+> const [owner, addr1, addr2] = await ethers.getSigners();
+```
+
+- トークン購入 (ETH を 20000 wei) 送金
+```js
+> await ME20F.buyTokens({value: 20000})
+```
+
+- トークン保有量の確認
+```js
+> await ME20.balanceOf(addr1.address)
+8000000n
+> await ME20.balanceOf(owner.address)
+99992000000n
