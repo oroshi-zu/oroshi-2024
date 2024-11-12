@@ -228,6 +228,7 @@ npx hardhat console --network localhost
 100n
 > await ME20.allowance(owner, addr1)
 900n
+```
 
 ## テストプログラム
 ```
@@ -494,3 +495,4 @@ contract Faucet {
 npx hardhat compile
 ```
 
+- デプロイスクリプトの作成
