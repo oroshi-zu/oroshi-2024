@@ -100,7 +100,7 @@ mkdir scripts
 nano scripts/deploy.js
 ```
 
-```javascript
+```js
 const hre = require("hardhat");
 
 async function main() {
@@ -108,7 +108,7 @@ async function main() {
   console.log("デプロイ主体のアカウント:", deployer.address);
 
   // 初期供給量を ethers.parseUnits を使用して設定
-  const initialSupply = hre.ethers.parseUnits("1000", 18);
+  const initialSupply = hre.ethers.parseUnits("10", 10);
 
   // トークンをデプロイ
   const MyERC20 = await hre.ethers.deployContract("MyERC20",[initialSupply]);
@@ -136,17 +136,17 @@ npx hardhat run scripts/deploy.js --network localhost
 上手くいくと、以下のように表示される
 ```
 デプロイ主体のアカウント: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-オーナー: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+オーナー: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
 ```
 
 - ログの確認
 ```
-Mined block #3
-  Block: 0x02c3554d6ffc0357be96adeee7f166c0f6da4c4e61fb847381def660894d2fbe
-    Base fee: 669921875
-    Transaction:           0x2ee57f341412d97757f09f272e36f4b1d31ceddcc91b62d22305f7146808e41a
+Mined block #159
+  Block: 0xfcae8882d5d61e0f79f66770bf8e285a5f19428e47436ddcd0950a0245a99732
+    Base fee: 7
+    Transaction:           0x41dc85e9eb4acb83a8a1c8ea2aea1d8b908f83aa0bd5a564d9c9734430b47338
       Contract deployment: MyERC20
-      Contract address:    0x5fbdb2315678afecb367f032d93f642f64180aa3
+      Contract address:    0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0
       From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
       Value:               0 ETH
 ```
@@ -161,23 +161,23 @@ npx hardhat console --network localhost
 ```
 
 ### ERC20コントラクトへの操作
-```
-> const MyERC20 = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
+```js
+> const MyERC20 = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
 
 > const MyERC20factory = await ethers.getContractFactory("MyERC20")
 
 // 当該コントラクトアドレスのコントラクトに接続する
 > const ME20 = await MyERC20factory.attach(MyERC20)
 
-// EOAのアドレス
+// テスト用アカウント
 > const [owner, addr1, addr2] = await ethers.getSigners();
 
 // トークンの総供給量
 > await ME20.totalSupply()
-1000000000000000000000n
+100000000000n
 // owner のトークン保有量
 > await ME20.balanceOf(owner)
-1000000000000000000000n
+100000000000n
 > await ME20.name()
 'MyERC20'
 > await ME20.symbol()
@@ -188,49 +188,35 @@ npx hardhat console --network localhost
 
 - トークンの送付
 ```js
-> await contract.transfer(addr1,80)
-ContractTransactionResponse {
-  provider: HardhatEthersProvider {
-    _hardhatProvider: LazyInitializationProviderAdapter {
-      _providerFactory: [AsyncFunction (anonymous)],
-      _emitter: [EventEmitter],
-      _initializingPromise: [Promise],
-      provider: [BackwardsCompatibilityProviderAdapter]
-    },
-    _networkName: 'localhost',
-    _blockListeners: [],
-    _transactionHashListeners: Map(0) {},
-    _eventListeners: []
-  },
-  blockNumber: null,
-  blockHash: null,
-  index: undefined,
-  hash: '0x58f12db917786dad6b7da43b9ac95bd6687a53a0fc95fecf0382ccd00e39aafe',
-  type: 2,
-  to: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-  from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-  nonce: 1,
-  gasLimit: 30000000n,
-  gasPrice: 1002745697n,
-  maxPriorityFeePerGas: 1000000000n,
-  maxFeePerGas: 1002745697n,
-  maxFeePerBlobGas: null,
-  data: '0xa9059cbb00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c80000000000000000000000000000000000000000000000000000000000000050',
-  value: 0n,
-  chainId: 31337n,
-  signature: Signature { r: "0x120f7d74e148135834964d109f816956cd382d3f6550b4e8ff7fea8983f01381", s: "0x15b6b8f7ef2aab9ff440ff95fefb7749db4e49fc046af36eaa14346d3fb50059", yParity: 1, networkV: null },
-  accessList: [],
-  blobVersionedHashes: null
-}
+> await ME20.transfer(addr1,8000000)
 ```
 
 - アカウントのトークン保有残高の確認
 ```js
-> await contract.balanceOf(owner)
-999999999999999999920n
-> await contract.balanceOf(addr1)
-80n
+> await ME20.balanceOf(owner)
+99992000000n
+> await ME20.balanceOf(addr1)
+8000000n
 ```
+
+- addr1 にトークン送金を承認する
+```js
+ await ME20.approve(addr1,1000)
+```
+
+- addr1 に承認された owner のトークンの引き出し可能金額
+```js
+await ME20.allowance(owner, addr1)
+1000n
+```
+
+- addr1 が owner の代理で addr2 にトークンを送金する
+```js
+await ME20.transferFrom(addr1,addr2,100)
+```
+
+- アカウントのトークン保有残高の確認
+
 
 ## テストプログラム
 ```
@@ -435,9 +421,11 @@ hardhat node が別ターミナルで実行されているか確認
 - プロジェクトルートに移動
 
 ### Eth でトークンを販売するコントラクトの作成手順
-1. トークン購入者はETHを支払い、トークンを受け取る。
-2. トークンの売り手は、コントラクトが指定する量のトークンをtransferFrom関数を使って購入者に送る。
-3. レートは1ETHあたりのトークン量として決めます。
+1. コントラクトがETHを支払い可能
+2. コントラクトが所有する Eth をオーナーのみが引き出し可能
+3. トークンを受け取り可能
+4. コントラクトが所有するトークンを transferFrom 関数を使って購入者に送る。
+5. トークンとのレートは 1ETH あたりのトークン量として決める
 
 ### コントラクトのコード
 ```
@@ -446,104 +434,52 @@ nano contracts/Faucet.sol
 
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.0;
+
+// OpenZeppelinのライブラリをインポートする
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./MyERC20.sol";
 
-// 無料配布（Faucet）システムのコントラクト
-contract Faucets {
-    // ユーザーごとの次回リクエスト可能時間を管理するマッピング
-    mapping(address => uint256) userNextBuyTime;
-    
-    // リクエスト間の待機時間（変更不可）
-    uint256 private immutable buyTimeLimit;
-    
-    // ERC20トークンのインスタンス
-    CWMToken private immutable cwmToken;
-
-    // コンストラクタ
-    // @param tokenAddress - ERC20トークンのアドレス
-    // @param _buyTimeLimit - リクエスト間の待機時間（秒）
-    constructor(address tokenAddress, uint256 _buyTimeLimit) {
-        cwmToken = CWMToken(tokenAddress);  // トークンコントラクトのインスタンス化
-        buyTimeLimit = _buyTimeLimit;       // 待機時間の設定
-    }
-
-    // トークンの無料配布をリクエストする関数
-    function requestTokens() public {
-        // ゼロアドレスチェック
-        require(msg.sender != address(0), "Cannot send token zero address");
-        
-        // 次回リクエスト可能時間のチェック
-        require(
-            block.timestamp > userNextBuyTime[msg.sender],
-            "Your next request time is not reached yet"
-        );
-        
-        // 10 etherの量のトークンを送信
-        require(
-            cwmToken.transfer(msg.sender, 10 ether),
-            "requestTokens(): Failed to Transfer"
-        );
-
-        // 次回リクエスト可能時間を更新
-        userNextBuyTime[msg.sender] = block.timestamp + buyTimeLimit;
-    }
-
-    // 次回リクエスト可能時間を取得する関数
-    function getNextBuyTime() public view returns (uint256) {
-        return userNextBuyTime[msg.sender];
-    }
-}
-
-
-// MyERC20 (ERC20)コントラクトを利用するためのインターフェース定義
-interface MyERC20 {
-    // 他のアドレス（_spender）にトークンの使用を許可する
-    function approve(address _spender, uint256 _amount) external returns (bool);
-    // 許可されたアドレスがトークンを転送する
-    function transferFrom(address _sender, address _recipient, uint256 _amount) external returns (bool);
-    // アドレスの残高を確認する
-    function balanceOf(address _account) external view returns (uint256);
-}
-
-// ETHでトークンを購入するためのコントラクト
 contract Faucet {
-    JPYcoin public token;      // トークンコントラクトへの参照
-    address public seller;      // トークンの販売者アドレス
-    uint256 public rate;       // 交換レート（1 ETHあたりのトークン数）
+    MyERC20 public token;    // トークンコントラクトへの参照
+    address public owner;    // コントラクトの所有者アドレス
+    uint256 public rate;     // 交換レート（1ETHあたりのトークン量）
 
-    // コンストラクタ
-    // @param _token - JPYcoinコントラクトのアドレス
-    // @param _seller - 販売者のアドレス
-    // @param _rate - 交換レート
-    constructor(JPYcoin _token, address _seller, uint256 _rate) {
-        token = _token;
-        seller = _seller;
-        rate = _rate;
+    constructor(MyERC20 _token, uint256 _rate) {
+        token = _token;     // トークンコントラクトの設定
+        rate = _rate;       // レートの設定
+        owner = msg.sender; // コントラクトをデプロイしたアドレスを所有者として設定
     }
 
-    // ETHを送信してトークンを購入する関数
+    // コントラクトにETHを送信するための関数
+    // payable修飾子により、ETHの受け取りが可能
+    // この ETH はトークン購入の代金になるので，ETHを受領すると購入者にJPYトークンを代理送金します
     function buyTokens() public payable {
-        // 送信されたETHが0より大きいことを確認
+        // msg.value     呼び出しトランザクションで送金された ETH の金額（wei単位）
         require(msg.value > 0, "ETH must be greater than 0");
-
-        // 購入できるトークン量を計算（ETH量 * レート）
+        // 購入可能なトークン量を計算（ETH量 × レート）
         uint256 tokenAmount = msg.value * rate;
-
-        // 販売者が十分なトークンを持っているか確認
-        require(token.balanceOf(seller) >= tokenAmount, "Seller does not have enough tokens");
-
-        // 販売者から購入者へトークンを転送
-        require(token.transferFrom(seller, msg.sender, tokenAmount), "Token transfer failed");
+        // 売り手に十分なトークンがあるか確認
+        require(token.balanceOf(owner) >= tokenAmount, "Seller does not have enough tokens");
+        // 売り手から購入者へのトークン送信
+        require(token.transferFrom(owner, msg.sender, tokenAmount), "Token transfer failed");
     }
-
-    // 販売者がコントラクトに蓄積されたETHを引き出す関数
+    // 売り手(所有者)がETHを引き出すための関数
     function withdrawETH() public {
-        // 販売者のみが実行できることを確認
-        require(msg.sender == seller, "Only seller can withdraw");
-        
-        // 販売者にETHを送信
-        payable(seller).transfer(address(this).balance);
+        // 呼び出し者が所有者であることを確認
+        require(msg.sender == owner, "Only owner can withdraw");
+        // コントラクトの保有するETHを所有者に送金
+        payable(owner).transfer(address(this).balance);
+    }
+    // コントラクトの残高を確認する関数
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
     }
 }
 ```
+
+- コンパイル
+```
+npx hardhat compile
+```
+
