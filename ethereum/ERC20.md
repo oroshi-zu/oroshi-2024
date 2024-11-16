@@ -528,19 +528,28 @@ npx hardhat console
 > const MyERC20factory = await ethers.getContractFactory("MyERC20")
 > const ME20 = await MyERC20factory.attach(MyERC20)
 
-> const ME20Faucet = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+> const ME20Faucet = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
 > const ME20FaucetFactory = await ethers.getContractFactory("ME20Faucet")
 > const ME20F = await ME20FaucetFactory.attach(ME20Faucet)
-```
-
-- ERC20コントラクトからトークン購入コントラクトに対して代理送金を許可する（1000000000トークンまで）
-```js
-> await ME20.approve(ME20Faucet,1000000000);
 ```
 
 - テスト用アドレス
 ```js
 > const [owner, addr1, addr2] = await ethers.getSigners();
+```
+
+- ERC20コントラクトからトークン購入コントラクトに対して代理送金を許可する（1000000000トークンまで）
+```js
+> const faucetAddress = await ME20F.getAddress()
+> const approveAmount = 1000000000
+> await ME20.approve(faucetAddress, approveAmount)
+```
+
+- 承認額の確認
+``` js
+> const allowance = await ME20.allowance(owner.address, faucetAddress)
+> console.log("Approved amount:", allowance.toString())
+Approved amount: 1000000000
 ```
 
 - トークン購入 (ETH を 20000 wei) 送金
