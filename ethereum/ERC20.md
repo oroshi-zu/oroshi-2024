@@ -561,6 +561,7 @@ const ethAmount = ethers.parseEther("5")
 const rate = await ME20F.rate()
 
 console.log("予想されるトークン量:", (BigInt(5) * rate).toString())
+```
 
 - トークン購入 (5 ETH) 送金
 ```js
