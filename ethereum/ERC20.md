@@ -102,10 +102,13 @@ nano ignition/modules/MyERC20.js
 
 ```js
 const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
+const { ethers } = require("hardhat");
 
 module.exports = buildModule("MyERC20", (m) => {
-  // コンストラクタの引数として初期のトーク供給量を 10の11乗とする
-  const contract = m.contract("MyERC20", [10**11]);
+  // 1000トークンを初期供給量として設定（18桁の小数点）
+  const initialSupply = ethers.parseUnits("1000", 18);
+
+  const contract = m.contract("MyERC20", [initialSupply]);
   return { contract };
 });
 ```
