@@ -523,7 +523,7 @@ ME20Faucet#ME20Faucet - 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
 ### コンソールからの操作
 - ERC20コントラクトとトークン購入コントラクトのインスタンスとの接続
 ```
-npx hardhat console
+npx hardhat console --network localhost
 ```
 
 ```js
