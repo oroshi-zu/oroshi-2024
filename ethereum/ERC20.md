@@ -544,25 +544,31 @@ npx hardhat console --network localhost
 - ERC20コントラクトからトークン購入コントラクトに対して代理送金を許可する（1000000000トークンまで）
 ```js
 > const faucetAddress = await ME20F.getAddress()
-> const approveAmount = 1000000000
+> const approveAmount = ethers.parseUnits("500", 18)
 > await ME20.approve(faucetAddress, approveAmount)
 ```
 
 - 承認額の確認
 ``` js
 > const allowance = await ME20.allowance(owner.address, faucetAddress)
-> console.log("Approved amount:", allowance.toString())
-Approved amount: 1000000000
+> console.log("承認額:", ethers.formatUnits(allowance, 18))
+承認額: 500.0
 ```
 
-- トークン購入 (ETH を 20000 wei) 送金
+- 支払うETHと、購入するトークン量の設定・確認
 ```js
-> await ME20F.buyTokens({value: 20000})
+const ethAmount = ethers.parseEther("5")
+const rate = await ME20F.rate()
+
+console.log("予想されるトークン量:", (BigInt(5) * rate).toString())
+
+- トークン購入 (5 ETH) 送金
+```js
+> await ME20F.connect(addr1).buyTokens({value: ethAmount})
 ```
 
-- トークン保有量の確認
+- Faucetの残高の確認
 ```js
-> await ME20.balanceOf(addr1.address)
-8000000n
-> await ME20.balanceOf(owner.address)
-99992000000n
+>  console.log("Faucetの残高:", ethers.formatEther(await ME20F.getBalance()))
+Faucetの残高: 5.0
+```
