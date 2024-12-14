@@ -1,4 +1,4 @@
-# ERC-5192 SBT (SoulBound Token) 譲渡不可能な NFT
+# ERC-5192 SBT (SoulBound Token)
 
 ## ERC-5192 の仕様
 
