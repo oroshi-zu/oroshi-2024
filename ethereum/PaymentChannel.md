@@ -135,32 +135,3 @@ contract MusicPaymentChannel is ReentrancyGuard {
 contract ModernChannel is ReentrancyGuard {
     using ECDSA for bytes32;
 ```
-
-
-```mermaid
-sequenceDiagram
-    actor L as リスナー(Wallet)
-    participant C as チャネル<br/>コントラクト
-    participant A as アーティスト
-    
-    Note over L,A: チャネルの開設フェーズ
-    L->>C: チャネル開設要求(デポジット)
-    activate C
-    C-->>L: チャネルID発行
-    deactivate C
-    
-    Note over L,A: 視聴・支払いフェーズ
-    loop 楽曲視聴ごと
-        L->>L: 支払い状態の更新
-        L->>L: 新しい状態に署名
-        L->>A: 署名付き支払い状態
-    end
-    
-    Note over L,A: チャネル精算フェーズ
-    A->>C: 最新の署名付き状態を提出
-    activate C
-    C->>C: 署名の検証
-    C->>A: アーティストへの支払い
-    C->>L: 残額の返金
-    deactivate C
-```
