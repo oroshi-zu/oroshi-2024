@@ -11,53 +11,117 @@
 
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.22;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract ModernChannel is ReentrancyGuard {
+contract MusicPaymentChannel is ReentrancyGuard {
+    // ECDSAライブラリを bytes32 型に対して使用可能にする
     using ECDSA for bytes32;
 
-    address public immutable sender;
-    address public immutable recipient;
-    uint256 public immutable startTime;
-    uint256 public immutable timeout;
-
-    event ChannelClosed(uint256 amount);
-    event DisputeRaised(bytes32 messageHash);
-
-    constructor(address _recipient, uint256 _timeout) payable {
-        sender = msg.sender;
-        recipient = _recipient;
-        startTime = block.timestamp;
-        timeout = _timeout;
+    struct Channel {
+        address listener;      // リスナーのアドレス
+        address artist;        // アーティストのアドレス
+        uint256 deposit;      // デポジット額(月額料金)
+        uint256 startTime;    // チャネル開設時間
+        uint256 duration;     // チャネルの有効期間
+        bool closed;          // チャネルが閉じられているかどうか
     }
 
+    // チャネルIDはkeccak256ハッシュで生成される
+    mapping(bytes32 => Channel) public channels;
+
+    // イベント定義
+    event ChannelOpened(bytes32 indexed channelId, address listener, address artist, uint256 deposit);
+    event ChannelClosed(bytes32 indexed channelId, uint256 payment);
+
+    // チャネルの開設
+    function openChannel(address artist, uint256 duration) external payable nonReentrant {
+        // デポジット額の確認
+        require(msg.value > 0, "Deposit required");
+        // アーティストのアドレスの確認
+        require(artist != address(0), "Invalid artist address");
+        // 有効期間の確認
+        require(duration > 0, "Duration must be greater than 0");
+
+        // チャネルIDの生成：送信者、アーティスト、タイムスタンプから一意のIDを作成
+        bytes32 channelId = keccak256(
+            abi.encodePacked(msg.sender, artist, block.timestamp)
+        );
+
+        // チャネル情報の保存
+        channels[channelId] = Channel({
+            listener: msg.sender,
+            artist: artist,
+            deposit: msg.value,
+            startTime: block.timestamp,
+            duration: duration,
+            closed: false
+        });
+
+        // チャネル開設イベントの発行
+        emit ChannelOpened(channelId, msg.sender, artist, msg.value);
+    }
+
+    // チャネルの精算
+    // アーティストが最新の署名付き支払い状態を提示してチャネルを閉じる
     function closeChannel(
-        uint256 amount,
-        bytes memory signature
+        bytes32 channelId, // 対象のチャネルID
+        uint256 amount,  // 支払い額
+        bytes memory signature  // リスナーの署名
     ) external nonReentrant {
-        bytes32 messageHash = keccak256(
-            abi.encodePacked(address(this), amount)
-        ).toEthSignedMessageHash();
-        
-        require(
-            messageHash.recover(signature) == sender,
-            "Invalid signature"
+        // チャネル情報の取得
+        Channel storage channel = channels[channelId];
+
+        // チャネルが閉じられていないこと、有効期間が終了していないこと、支払い額がデポジット額以下であることを確認
+        require(!channel.closed, "Channel already closed");
+        require(block.timestamp <= channel.startTime + channel.duration, "Channel expired");
+        require(amount <= channel.deposit, "Amount exceeds deposit");
+
+        // 署名の検証に使用するメッセージハッシュの作成
+        bytes32 message = keccak256(abi.encodePacked(channelId, amount));
+        bytes32 signedHash = keccak256(
+            abi.encodePacked("\x19Ethereum Signed Message:\n32", message)
         );
 
+        // 署名からアドレスを復元して検証
+        address signer = signedHash.recover(signature);
+        require(signer == channel.listener, "Invalid signature");
+
+        // 支払いの実行(チャネルを閉じる)
+        channel.closed = true;
+        
+        // アーティストへの支払い
+        (bool success, ) = payable(channel.artist).transfer(amount);
+        require(success, "Artist payment failed");
+        
+        // 残額をリスナーへ返金
+        if (channel.deposit > amount) {
+            payable(channel.listener).transfer(channel.deposit - amount);
+        }
+
+        // チャネル閉鎖イベントの発行
+        emit ChannelClosed(channelId, amount);
+    }
+
+    // チャネルの強制クローズ（タイムアウト時）
+    // 有効期限が切れた場合、リスナーは預けたETHを回収できる
+    function forceClose(bytes32 channelId) external nonReentrant {
+        Channel storage channel = channels[channelId]; // 対称のチャネルID
+
+        require(!channel.closed, "Channel already closed");
         require(
-            amount <= address(this).balance,
-            "Insufficient balance"
+            block.timestamp > channel.startTime + channel.duration,
+            "Channel not expired"
         );
 
-        emit ChannelClosed(amount);
-        
-        (bool success, ) = payable(recipient).call{value: amount}("");
-        require(success, "Transfer failed");
-        
-        selfdestruct(payable(sender));
+        // チャネルを閉じてデポジットを返金
+        channel.closed = true;
+        payable(channel.listener).transfer(channel.deposit);
+
+        // チャネル閉鎖イベントの発行（支払額0として記録）
+        emit ChannelClosed(channelId, 0);
     }
 }
 ```
