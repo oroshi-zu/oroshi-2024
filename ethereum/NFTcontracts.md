@@ -61,3 +61,6 @@ status = 1 → トランザクション成功
 status = 0 → トランザクション失敗（revert発生）  
 
 を意味する。
+
+## tokenURIの保存場所
+**IPFSを予定**
