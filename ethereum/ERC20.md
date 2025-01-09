@@ -87,137 +87,6 @@ module.exports = {
 npx hardhat node
 ```
 
-## デプロイスクリプトの作成
-### Ethers.jsのインストール
-デプロイスクリプト作成にあたって、ethers.js ライブラリをインストールする
-```
-npm install --save-dev ethers
-```
-
-- デプロイスクリプトを作成する
-
-```
-nano ignition/modules/MyERC20.js
-```
-
-```js
-const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
-const { ethers } = require("hardhat");
-
-module.exports = buildModule("MyERC20", (m) => {
-  // 1000トークンを初期供給量として設定（18桁の小数点）
-  const initialSupply = ethers.parseUnits("1000", 18);
-
-  const contract = m.contract("MyERC20", [initialSupply]);
-  return { contract };
-});
-```
-
-### ローカルノードへのデプロイ
-```
-npx hardhat ignition deploy ignition/modules/MyERC20.js --network localhost
-
-=>
-Batch #1
-  Executed MyERC20#MyERC20
-
-[ MyERC20 ] successfully deployed 🚀
-
-Deployed Addresses
-
-MyERC20#MyERC20 - 0x5FbDB2315678afecb367f032d93F642f64180aa3
-```
-
-- ログの確認
-```
-Mined block #2
-  Block: 0xb64be7063822be312b168bf81fd8616f3fc829add96ef9a670ccafef998e9ebb
-    Base fee: 765625000
-    Transaction:           0x133b8bd3e2a3e57fb5393b64cda1fa218106604ccaf74636a1ed35f810e4cfba
-      Contract deployment: MyERC20
-      Contract address:    0x5fbdb2315678afecb367f032d93f642f64180aa3
-      From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
-      Value:               0 ETH
-```
-
-コントラクトアドレスをメモしておく
-
-## コンソールからの操作
-
-### コンソールの起動
-```
-npx hardhat console --network localhost 
-```
-
-### ERC20コントラクトへの操作
-```js
-> const MyERC20 = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
-
-> const MyERC20factory = await ethers.getContractFactory("MyERC20")
-
-// 当該コントラクトアドレスのコントラクトに接続する
-> const ME20 = await MyERC20factory.attach(MyERC20)
-
-// テスト用アカウント
-> const [owner, addr1, addr2] = await ethers.getSigners();
-
-// トークンの総供給量
-> await ME20.totalSupply()
-100000000000n
-// owner のトークン保有量
-> await ME20.balanceOf(owner)
-100000000000n
-> await ME20.name()
-'MyERC20'
-> await ME20.symbol()
-'ME20'
-> await ME20.decimals()
-18n
-```
-
-- トークンの送付
-```js
-> await ME20.transfer(addr1,8000000)
-```
-
-- アカウントのトークン保有残高の確認
-```js
-> await ME20.balanceOf(owner)
-99992000000n
-> await ME20.balanceOf(addr1)
-8000000n
-```
-
-- addr1 にトークン送金を承認する
-```js
-> await ME20.approve(addr1,1000)
-```
-
-- addr1 に承認された owner のトークンの引き出し可能金額
-```js
-> await ME20.allowance(owner, addr1)
-1000n
-```
-
-- 送金のためにaddr1のアカウントに切り替える
-```js
-> const ME20_addr1 = await ME20.connect(addr1);
-```
-
-- addr1 が owner の代理で addr2 にトークンを送金する
-```js
-> await ME20_addr1.transferFrom(owner.address, addr2.address, 100)
-```
-
-- アカウントのトークン保有残高の確認
-```js
-> await ME20.balanceOf(owner)
-99991999900n
-> await ME20.balanceOf(addr2)
-100n
-> await ME20.allowance(owner, addr1)
-900n
-```
 
 ## テストプログラム
 ```
@@ -386,6 +255,140 @@ npx hardhat test
 
   5 passing (1m)
 ```
+
+
+## デプロイスクリプトの作成
+### Ethers.jsのインストール
+デプロイスクリプト作成にあたって、ethers.js ライブラリをインストールする
+```
+npm install --save-dev ethers
+```
+
+- デプロイスクリプトを作成する
+
+```
+nano ignition/modules/MyERC20.js
+```
+
+```js
+const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
+const { ethers } = require("hardhat");
+
+module.exports = buildModule("MyERC20", (m) => {
+  // 1000トークンを初期供給量として設定（18桁の小数点）
+  const initialSupply = ethers.parseUnits("1000", 18);
+
+  const contract = m.contract("MyERC20", [initialSupply]);
+  return { contract };
+});
+```
+
+### ローカルノードへのデプロイ
+```
+npx hardhat ignition deploy ignition/modules/MyERC20.js --network localhost
+
+=>
+Batch #1
+  Executed MyERC20#MyERC20
+
+[ MyERC20 ] successfully deployed 🚀
+
+Deployed Addresses
+
+MyERC20#MyERC20 - 0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+
+- ログの確認
+```
+Mined block #2
+  Block: 0xb64be7063822be312b168bf81fd8616f3fc829add96ef9a670ccafef998e9ebb
+    Base fee: 765625000
+    Transaction:           0x133b8bd3e2a3e57fb5393b64cda1fa218106604ccaf74636a1ed35f810e4cfba
+      Contract deployment: MyERC20
+      Contract address:    0x5fbdb2315678afecb367f032d93f642f64180aa3
+      From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+      Value:               0 ETH
+```
+
+コントラクトアドレスをメモしておく
+
+## コンソールからの操作
+
+### コンソールの起動
+```
+npx hardhat console --network localhost 
+```
+
+### ERC20コントラクトへの操作
+```js
+> const MyERC20 = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
+
+> const MyERC20factory = await ethers.getContractFactory("MyERC20")
+
+// 当該コントラクトアドレスのコントラクトに接続する
+> const ME20 = await MyERC20factory.attach(MyERC20)
+
+// テスト用アカウント
+> const [owner, addr1, addr2] = await ethers.getSigners();
+
+// トークンの総供給量
+> await ME20.totalSupply()
+100000000000n
+// owner のトークン保有量
+> await ME20.balanceOf(owner)
+100000000000n
+> await ME20.name()
+'MyERC20'
+> await ME20.symbol()
+'ME20'
+> await ME20.decimals()
+18n
+```
+
+- トークンの送付
+```js
+> await ME20.transfer(addr1,8000000)
+```
+
+- アカウントのトークン保有残高の確認
+```js
+> await ME20.balanceOf(owner)
+99992000000n
+> await ME20.balanceOf(addr1)
+8000000n
+```
+
+- addr1 にトークン送金を承認する
+```js
+> await ME20.approve(addr1,1000)
+```
+
+- addr1 に承認された owner のトークンの引き出し可能金額
+```js
+> await ME20.allowance(owner, addr1)
+1000n
+```
+
+- 送金のためにaddr1のアカウントに切り替える
+```js
+> const ME20_addr1 = await ME20.connect(addr1);
+```
+
+- addr1 が owner の代理で addr2 にトークンを送金する
+```js
+> await ME20_addr1.transferFrom(owner.address, addr2.address, 100)
+```
+
+- アカウントのトークン保有残高の確認
+```js
+> await ME20.balanceOf(owner)
+99991999900n
+> await ME20.balanceOf(addr2)
+100n
+> await ME20.allowance(owner, addr1)
+900n
+```
+
 
 ## MetaMaskでの送金
 hardhat node が別ターミナルで実行されているか確認
